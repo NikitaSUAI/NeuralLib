@@ -1,5 +1,7 @@
 import numpy as np
+import json
 from params.NodeModel import my_sigmoid
+from params.BPEModel import delta
 
 
 class NN:
@@ -15,21 +17,45 @@ class NN:
                        for i, j in zip(self.layers[:-1], self.layers[1:])]
 
     def train(self, signals:np.array, unswer:np.array):
-        if len(signals) != self.layers[0]:
-            raise BaseException("Всем пиздец")
+        for signal, uns in zip(signals, unswer):
+            err = self.query(signal) - uns
+            self.backpropagation(err)
 
-    def query(self, signals:np.array):
-        if len(signals) != self.layers[0]:
+    def backpropagation(self, err):
+        errors = [err, ]
+        it = self.signals[::-1].__iter__()
+        prev = next(it)
+        for w in self.weight[::-1]:
+            errors.append(np.dot(errors[-1], w.T))
+            w -= delta(errors[-1], prev := next(it), prev)
+        return errors
+
+
+    def query(self, signal:np.array):
+        self.signals = [signal, ]
+        if len(signal) != self.layers[0]:
             raise BaseException("Всем пиздец")
         for w in self.weight:
             # dot product of weights and signals
-            signals = self.af(np.dot(w, signals))
-        return signals
+            signal = self.af(np.dot(signal, w))
+            self.signals.append(signal)
+        return signal
 
-    def get_param_in_json(self):
-        pass
+    def save(self):
+        with open("params/params.json", "w") as f:
+            params = [self.layers,
+                      self.lr,
+                      self.weight]
+            # json.dump(self, f)
+        print(self.weight)
 
 
 if __name__ == "__main__":
-    nn = NN(layer=[2, 2, 2], lr=0.1, activation_func=my_sigmoid)
-    print(nn.query(np.array([0.5, 0.5])))
+    nn = NN(layer=[8, 8, 8], lr=0.1, activation_func=my_sigmoid)
+    learn = [np.random.random(8) for i in range(100)]
+    uns = list()
+    for i in learn:
+        uns.append(1 - i)
+    nn.train(learn, uns)
+    nn.save()
+    print(nn.query(np.array([1, 1, 1, 1, 1, 1, 1, 1])))
