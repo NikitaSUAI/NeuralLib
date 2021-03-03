@@ -2,7 +2,7 @@ import numpy as np
 import json
 from params.NodeModel import my_sigmoid
 from params.BPEModel import delta
-
+import matplotlib.pyplot as plt
 
 class NN:
     def __init__(self, **params):
@@ -13,13 +13,20 @@ class NN:
         self.lr = params["lr"]
         self.af = params["activation_func"]
         # weight between layers
-        self.weight = [np.full((i, j), np.random.uniform(0, 1/np.sqrt(j)))
+        self.weight = [np.random.uniform(0, 1/np.sqrt(j), (i, j))
                        for i, j in zip(self.layers[:-1], self.layers[1:])]
 
     def train(self, signals:np.array, unswer:np.array):
+        errs = list()
         for signal, uns in zip(signals, unswer):
             err = self.query(signal) - uns
             self.backpropagation(err)
+            errs.append(err.sum())
+            if 0 < err.sum() < 0.1:
+                break
+        plt.plot(range(len(errs)), errs)
+        plt.show()
+
 
     def backpropagation(self, err):
         errors = [err, ]
@@ -27,7 +34,7 @@ class NN:
         prev = next(it)
         for w in self.weight[::-1]:
             errors.append(np.dot(errors[-1], w.T))
-            w -= delta(errors[-1], prev := next(it), prev)
+            w -= self.lr * delta(errors[-1], prev := next(it), prev)
         return errors
 
 
@@ -51,11 +58,11 @@ class NN:
 
 
 if __name__ == "__main__":
-    nn = NN(layer=[8, 8, 8], lr=0.1, activation_func=my_sigmoid)
-    learn = [np.random.random(8) for i in range(100)]
+    nn = NN(layer=[8, 8, 8, 8, 8, 8], lr=0.0001, activation_func=my_sigmoid)
+    learn = [np.random.random(8) for i in range(10000)]
     uns = list()
     for i in learn:
         uns.append(1 - i)
     nn.train(learn, uns)
     nn.save()
-    print(nn.query(np.array([1, 1, 1, 1, 1, 1, 1, 1])))
+    print(nn.query(np.array([0, 0, 0, 0, 1, 1, 1, 1])))
