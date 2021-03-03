@@ -21,8 +21,8 @@ class NN:
         for signal, uns in zip(signals, unswer):
             err = self.query(signal) - uns
             self.backpropagation(err)
-            errs.append(err.sum())
-            if 0 < err.sum() < 0.1:
+            errs.append((err**2).sum())
+            if 0 < (err**2).sum() < 0.1:
                 break
         plt.plot(range(len(errs)), errs)
         plt.show()
