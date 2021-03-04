@@ -1,5 +1,6 @@
 import numpy as np
 
 
-def delta(err, prev, next):
-    return np.dot(err * prev * (1 - prev), next.T)
+def delta(prev):
+    # return prev * (1 - prev)
+    return np.dot(prev, (1 - prev))
