@@ -23,7 +23,7 @@ class NN:
             err = uns - self.query(signal)
             self.backpropagation(err)
             errs.append((err**2).sum()/len(err))
-            # if 0 < (err**2).sum() < 0.1:
+            # if 0 < (err**2).sum() < 0.001:
             #     break
         plt.plot(range(len(errs)), errs)
         plt.show()
@@ -105,11 +105,11 @@ if __name__ == "__main__":
     # nn.save()
     # print(nn.query(np.array([0, 0, 0, 0, 1, 1, 1, 1])))
     #
-    nn = NN(layer=[1, 1], lr=0.1, activation_func=my_sigmoid)
-    learn = [np.array([np.random.rand(), ])for i in range(1000000)]
+    nn = NN(layer=[1, 1, 1], lr=0.1, activation_func=my_sigmoid)
+    learn = [np.array([np.random.rand(), ])for i in range(10000)]
     uns = list()
     for i in learn:
-        uns.append(i / 8)
+        uns.append(my_sigmoid(0.3*my_sigmoid(0.7*i)))
     nn.train(learn, uns)
     nn.save()
     print(nn.query([0.8, ]))

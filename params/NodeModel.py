@@ -10,3 +10,7 @@ def my_sigmoid(x):
 def sigmoid(x):
     # better with large arrays
     return expit(x)
+
+
+if __name__ == "__main__":
+    print(my_sigmoid(0.3 * my_sigmoid(0.7 * 0.8)))
