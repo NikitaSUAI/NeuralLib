@@ -1,35 +1,77 @@
 import numpy as np
 import json
-from params.NodeModel import my_sigmoid
-from params.BPEModel import delta
+# plt - need to take away
 import matplotlib.pyplot as plt
-from binary.convserter import B2D, D2B
+from typing import List, Dict
+
+
 
 class NN:
+    """Class provides an opportunity to create and train your own neural
+    network.
+
+    """
     def __init__(self, **params):
-        # layers : [ size of first layer, size of second layer, ...]
-        # len(layers) - amount of layers
+        """Configure your own network with key-word args
+
+        :param params: Options.
+        :type params: Dict
+        :param layer: list of layers like
+                [ size of first layer, size of second layer, ...]
+                len(layers) - amount of layers.
+        :type layer: List[int]
+        :param lr: learning rate.
+        :type lr: float
+        :param activation_func: pointer to custom activation function
+        :type activation_func: def af(np.array)->np.array
+        :raise: KeyError from kwargs.
+        :return: NN object that ready to work.
+        :rtype: NN object
+        :todo:
+            - add type hinting for kwargs
+            - add loading from file
+            - add kwargs for derivative of an activation function
+
+        """
         self.layers = params["layer"]
-        # lr - learning rate
         self.lr = params["lr"]
         self.af = params["activation_func"]
         # weight between layers
         self.weight = [np.random.uniform(0, 1/np.sqrt(j), (i, j))
                        for i, j in zip(self.layers[:-1], self.layers[1:])]
 
-    def train(self, signals:np.array, unswer:np.array):
+    def train(self, signals: np.array, answer: np.array):
+        """ Methode use backpropagation of errors to train neural net
+
+        :param signals: signal for input layer of neural net
+        :type signals: np.array
+        :param answer: answer for comparison
+        :type answer: np.array
+        :todo:
+            - detach plotting
+
+        """
         errs = list()
-        for signal, uns in zip(signals, unswer):
+        for signal, uns in zip(signals, answer):
             err = uns - self.query(signal)
             self.backpropagation(err)
             errs.append((err**2).sum()/len(err))
-            # if 0 < (err**2).sum() < 0.001:
-            #     break
+            if 0 < (err**2).sum() < 0.0000001:
+                break
         plt.plot(range(len(errs)), errs)
         plt.show()
 
 
     def backpropagation(self, err):
+        """
+        :param err: difference between correct answer and answer of nn
+        :type err: np.array
+        :return: matrix of errors for each layer
+        :rtype: List[np.array]
+        :todo:
+            - take away derivative of an af
+            - remove unnecessary comments
+        """
         errors = [err, ]
         it = (self.signals[::-1]).__iter__()
         o = next(it)
@@ -48,77 +90,51 @@ class NN:
             o = next(it)
             h = (errors[-1] * o * (1 - o))
             w += self.lr * np.dot(h.reshape(h.size, 1), prev.reshape(1, prev.size))
-
-
         return errors
 
-
     def query(self, signal:np.array):
+        """ Predict answer
+
+        :param signal: signal for input layer of neural net. Len of signal
+            must equal len of first layer.
+        :type signal: np.array
+        :raise: BaseException.
+        :return: predicted answer of neural net.
+        :rtype: np.array
+        :todo:
+            - change exception
+            - take away self.signals (PEP)
+        """
         self.signals = [signal, ]
         if len(signal) != self.layers[0]:
-            raise BaseException("Всем пиздец")
+            raise BaseException("ERR")
         for w in self.weight:
             # dot product of weights and signals
             signal = self.af(np.dot(signal, w))
             self.signals.append(signal)
         return signal
 
-    def save(self):
-        with open("params/params.json", "w") as f:
+    def save(self, path="params/params.json"):
+        """ Save params of nn to json file (not working yet)
+
+        :param path: path to json file with params of neural network,
+            by default is "params/params.json"
+        :todo:
+            - end this methode
+        """
+        with open(path, "w") as f:
             params = [self.layers,
                       self.lr,
                       self.weight]
             # json.dump(self, f)
         print(self.weight)
 
+    def load(self, path="params/params.json"):
+        """ Load params of nn from json file (not working yet)
 
-if __name__ == "__main__":
-
-    # nn = NN(layer=[8, 6, 4, 2], lr=0.1, activation_func=my_sigmoid)
-    # temp = lambda x: D2B(x)
-    # magic = lambda x: [1, 0] if B2D(x) < 16 else [0, 1]
-    # prepere = lambda x : np.array([ 0.9 if i == 1 else 0.1 for i in x])
-    # learn = [temp(np.random.randint(100)) for _ in range(370000)]
-    # uns = [magic(x) for x in learn]
-    # nn.train(learn, uns)
-    # nn.save()
-    # print(nn.query(np.array([0, 0, 0, 0, 1, 1, 1, 1])))
-
-    # nn = NN(layer=[8, 6, 4, 2], lr=0.01, activation_func=my_sigmoid)
-    # temp = lambda x: D2B(x)
-    # magic = lambda x: [1, 0] if B2D(x) > 15 else [0, 1]
-    # prepere = lambda x : np.array([ 0.9 if i == 1 else 0.1 for i in x])
-    # learn = [temp(np.random.randint(100)) for _ in range(100000)]
-    # uns = [magic(x) for x in learn]
-    # nn.train(learn, uns)
-    # nn.save()
-    # print(nn.query(np.array([0, 0, 0, 0, 1, 1, 1, 1])))
-
-    # nn = NN(layer=[8, 1, 8], lr=0.01, activation_func=my_sigmoid)
-    # f = lambda: [1 if np.random.rand() > 0.5 else 0 for _ in range(8)]
-    # ref = lambda x: [0 if i > 0.5 else 1 for i in x]
-    # learn = [np.array(f()) for _ in range(10000)]
-    # uns = list()
-    # for i in learn:
-    #     uns.append(ref(i))
-    # nn.train(learn, uns)
-    # nn.save()
-    # print(nn.query(np.array([0, 0, 0, 0, 1, 1, 1, 1])))
-    #
-    nn = NN(layer=[1, 1, 1], lr=0.1, activation_func=my_sigmoid)
-    learn = [np.array([np.random.rand(), ])for i in range(10000)]
-    uns = list()
-    for i in learn:
-        uns.append(my_sigmoid(0.3*my_sigmoid(0.7*i)))
-    nn.train(learn, uns)
-    nn.save()
-    print(nn.query([0.8, ]))
-    #
-    # nn = NN(layer=[3, 3, 3], lr=0.3, activation_func=my_sigmoid)
-    # learn = [np.array([np.random.rand(), ])for i in range(1000000)]
-    # uns = list()
-    # for i in learn:
-    #     uns.append(i / 8)
-    # nn.train(learn, uns)
-    # nn.save()
-    # print(nn.query([0.8, ]))
+        :param path: path to json file with params of neural network,
+                by default is "params/params.json"
+        :todo:
+            - end this methode
+        """
+        ...

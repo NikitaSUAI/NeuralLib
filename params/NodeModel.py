@@ -3,14 +3,21 @@ from scipy.special import expit
 
 
 def my_sigmoid(x):
-    # better with small arrays and single value
+    """ Template of an activation function. This template better with small
+    arrays.
+
+    :param x: (np.array)
+    :return: (np.array)
+
+    """
     return 1/(1 + np.exp(-x))
 
 
 def sigmoid(x):
-    # better with large arrays
+    """ Template of an activation function. This template better with large
+    arrays. It call scipy.special.expit().
+
+    :param x: (np.array)
+    :return: (np.array)
+    """
     return expit(x)
-
-
-if __name__ == "__main__":
-    print(my_sigmoid(0.3 * my_sigmoid(0.7 * 0.8)))
